@@ -7,6 +7,7 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 from tensorflow import keras
+from pyproj import Transformer
 
 
 # ============================================================
@@ -48,114 +49,97 @@ FIELD_CLASSES = [
 
 st.markdown(
     """
-    <style>
-
-    .stApp {
-        background: #f5f7fa;
-    }
-
-    .block-container {
-        max-width: 1400px;
-        padding-top: 1.5rem;
-    }
-
-    .main-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #102a43;
-        margin-bottom: 0.2rem;
-    }
-
-    .subtitle {
-        color: #627d98;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .card {
-        background: #ffffff;
-        border: 1px solid #d9e2ec;
-        border-radius: 16px;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-    }
-
-    .card-title {
-        color: #102a43;
-        font-size: 1.15rem;
-        font-weight: 800;
-        margin-bottom: 0.4rem;
-    }
-
-    .card-text {
-        color: #627d98;
-        line-height: 1.5;
-    }
-
-    .priority {
-        border-radius: 16px;
-        padding: 1.3rem;
-        background: #ffffff;
-        border: 1px solid #d9e2ec;
-        min-height: 135px;
-    }
-
-    .priority-label {
-        color: #627d98;
-        font-size: 0.82rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .priority-value {
-        color: #102a43;
-        font-size: 1.9rem;
-        font-weight: 800;
-        margin-top: 0.35rem;
-    }
-
-    .priority-text {
-        color: #627d98;
-        margin-top: 0.3rem;
-    }
-
-    .result {
-        background: #ffffff;
-        border: 1px solid #d9e2ec;
-        border-radius: 16px;
-        padding: 1.4rem;
-    }
-
-    .result-label {
-        color: #627d98;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .result-value {
-        color: #102a43;
-        font-size: 1.55rem;
-        font-weight: 800;
-        margin-top: 0.3rem;
-    }
-
-    .result-text {
-        color: #627d98;
-        line-height: 1.5;
-    }
-
-    .notice {
-        background: #eef4f8;
-        border: 1px solid #d9e2ec;
-        border-radius: 14px;
-        padding: 1rem;
-        color: #486581;
-        line-height: 1.5;
-    }
-
-    </style>
-    """,
+<style>
+.stApp {
+    background: #f5f7fa;
+}
+.block-container {
+    max-width: 1400px;
+    padding-top: 1.5rem;
+}
+.main-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #102a43;
+    margin-bottom: 0.2rem;
+}
+.subtitle {
+    color: #627d98;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+.card {
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+.card-title {
+    color: #102a43;
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+}
+.card-text {
+    color: #627d98;
+    line-height: 1.5;
+}
+.priority {
+    border-radius: 16px;
+    padding: 1.3rem;
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    min-height: 135px;
+}
+.priority-label {
+    color: #627d98;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.priority-value {
+    color: #102a43;
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-top: 0.35rem;
+}
+.priority-text {
+    color: #627d98;
+    margin-top: 0.3rem;
+}
+.result {
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 16px;
+    padding: 1.4rem;
+}
+.result-label {
+    color: #627d98;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.result-value {
+    color: #102a43;
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin-top: 0.3rem;
+}
+.result-text {
+    color: #627d98;
+    line-height: 1.5;
+}
+.notice {
+    background: #eef4f8;
+    border: 1px solid #d9e2ec;
+    border-radius: 14px;
+    padding: 1rem;
+    color: #486581;
+    line-height: 1.5;
+}
+</style>
+""",
     unsafe_allow_html=True,
 )
 
@@ -189,22 +173,21 @@ priority_map, transform, bounds, map_crs = load_priority_map()
 
 st.sidebar.markdown(
     """
-    <div style="
-        font-size:1.35rem;
-        font-weight:800;
-        color:#102a43;
-        margin-bottom:0.2rem;
-    ">
-        EXPLORCO AI
-    </div>
-
-    <div style="
-        color:#627d98;
-        margin-bottom:1.2rem;
-    ">
-        Geospatial Exploration Assistant
-    </div>
-    """,
+<div style="
+    font-size:1.35rem;
+    font-weight:800;
+    color:#102a43;
+    margin-bottom:0.2rem;
+">
+    EXPLORCO AI
+</div>
+<div style="
+    color:#627d98;
+    margin-bottom:1.2rem;
+">
+    Geospatial Exploration Assistant
+</div>
+""",
     unsafe_allow_html=True,
 )
 
@@ -221,14 +204,14 @@ st.sidebar.markdown("---")
 
 st.sidebar.markdown(
     """
-    **Project**
+**Project**
 
-    AI-Assisted Geospatial Screening for Exploration Target Prioritization in Ghana
+AI-Assisted Geospatial Screening for Exploration Target Prioritization in Ghana
 
-    **Purpose**
+**Purpose**
 
-    Support exploration teams by combining geospatial screening with field observations.
-    """
+Support exploration teams by combining geospatial screening with field observations.
+"""
 )
 
 
@@ -258,6 +241,27 @@ def class_description(value):
 
 def readable_field_class(value):
     return value.replace("_", " ")
+
+
+def colorize_priority_map(data):
+    rgb = np.zeros(
+        (data.shape[0], data.shape[1], 3),
+        dtype=np.uint8,
+    )
+
+    # 1 = Check Later
+    rgb[data == 1] = [44, 162, 95]
+
+    # 2 = Check Next
+    rgb[data == 2] = [253, 174, 97]
+
+    # 3 = Check First
+    rgb[data == 3] = [215, 25, 28]
+
+    # 0 = NoData
+    rgb[data == 0] = [255, 255, 255]
+
+    return rgb
 
 
 def predict_field_image(image):
@@ -293,6 +297,23 @@ def predict_field_image(image):
         probabilities,
     )
 
+# ============================================================
+# GOOGLE MAPS → UTM CONVERSION
+# ============================================================
+
+def latlon_to_utm(latitude, longitude):
+    transformer = Transformer.from_crs(
+        "EPSG:4326",
+        "EPSG:32630",
+        always_xy=True
+    )
+
+    easting, northing = transformer.transform(
+        longitude,
+        latitude
+    )
+
+    return easting, northing
 
 # ============================================================
 # DASHBOARD
@@ -317,21 +338,21 @@ if page == "Dashboard":
     # --------------------------------------------------------
 
     st.markdown(
-    """
-    <div class="card">
-        <div class="card-title">
-            Welcome
-        </div>
-
-        <div class="card-text">
-            This prototype helps organize exploration areas
-            into three simple review levels using satellite,
-            terrain and road-access information.
-        </div>
+        """
+<div class="card">
+    <div class="card-title">
+        Welcome
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    <div class="card-text">
+        This prototype helps organize exploration areas
+        into three simple review levels using satellite,
+        terrain and road-access information.
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
     # --------------------------------------------------------
     # PRIORITY CARDS
     # --------------------------------------------------------
@@ -355,54 +376,54 @@ if page == "Dashboard":
     with c1:
         st.markdown(
             f"""
-            <div class="priority">
-                <div class="priority-label">
-                    🔴 Check First
-                </div>
-                <div class="priority-value">
-                    {first_pct:.1f}%
-                </div>
-                <div class="priority-text">
-                    Recommended for earlier investigation.
-                </div>
-            </div>
-            """,
+<div class="priority">
+    <div class="priority-label">
+        🔴 Check First
+    </div>
+    <div class="priority-value">
+        {first_pct:.1f}%
+    </div>
+    <div class="priority-text">
+        Recommended for earlier investigation.
+    </div>
+</div>
+""",
             unsafe_allow_html=True,
         )
 
     with c2:
         st.markdown(
             f"""
-            <div class="priority">
-                <div class="priority-label">
-                    🟠 Check Next
-                </div>
-                <div class="priority-value">
-                    {next_pct:.1f}%
-                </div>
-                <div class="priority-text">
-                    Areas worth further review.
-                </div>
-            </div>
-            """,
+<div class="priority">
+    <div class="priority-label">
+        🟠 Check Next
+    </div>
+    <div class="priority-value">
+        {next_pct:.1f}%
+    </div>
+    <div class="priority-text">
+        Areas worth further review.
+    </div>
+</div>
+""",
             unsafe_allow_html=True,
         )
 
     with c3:
         st.markdown(
             f"""
-            <div class="priority">
-                <div class="priority-label">
-                    🟢 Check Later
-                </div>
-                <div class="priority-value">
-                    {later_pct:.1f}%
-                </div>
-                <div class="priority-text">
-                    Areas that can be reviewed later.
-                </div>
-            </div>
-            """,
+<div class="priority">
+    <div class="priority-label">
+        🟢 Check Later
+    </div>
+    <div class="priority-value">
+        {later_pct:.1f}%
+    </div>
+    <div class="priority-text">
+        Areas that can be reviewed later.
+    </div>
+</div>
+""",
             unsafe_allow_html=True,
         )
 
@@ -414,17 +435,16 @@ if page == "Dashboard":
 
     st.markdown(
         """
-        <div class="card">
-            <div class="card-title">
-                Exploration Screening Map
-            </div>
-
-            <div class="card-text">
-                The map shows the relative review priority
-                produced by the geospatial screening model.
-            </div>
-        </div>
-        """,
+<div class="card">
+    <div class="card-title">
+        Exploration Screening Map
+    </div>
+    <div class="card-text">
+        The map shows the relative review priority
+        produced by the geospatial screening model.
+    </div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -444,19 +464,23 @@ if page == "Dashboard":
         ]
 
     st.image(
-        display_map,
+        colorize_priority_map(display_map),
         use_container_width=True,
+    )
+
+    st.caption(
+        "🔴 Check First   •   🟠 Check Next   •   🟢 Check Later"
     )
 
     st.markdown(
         """
-        <div class="notice">
-            <b>Important:</b>
-            These categories represent relative field-investigation
-            priority from the prototype screening model.
-            They are not probabilities of finding hydrocarbons.
-        </div>
-        """,
+<div class="notice">
+    <b>Important:</b>
+    These categories represent relative field-investigation
+    priority from the prototype screening model.
+    They are not probabilities of finding hydrocarbons.
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -499,8 +523,12 @@ elif page == "Exploration Map":
         ]
 
     st.image(
-        display_map,
+        colorize_priority_map(display_map),
         use_container_width=True,
+    )
+
+    st.caption(
+        "🔴 Check First   •   🟠 Check Next   •   🟢 Check Later"
     )
 
     # --------------------------------------------------------
@@ -509,18 +537,17 @@ elif page == "Exploration Map":
 
     st.markdown(
         """
-        <div class="card">
-            <div class="card-title">
-                📍 Check a Location
-            </div>
-
-            <div class="card-text">
-                Enter Easting and Northing coordinates from the
-                map coordinate system to check the actual screening
-                result at that location.
-            </div>
-        </div>
-        """,
+<div class="card">
+    <div class="card-title">
+        📍 Check a Location
+    </div>
+    <div class="card-text">
+        Enter Easting and Northing coordinates from the
+        map coordinate system to check the actual screening
+        result at that location.
+    </div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -602,30 +629,25 @@ elif page == "Exploration Map":
 
         st.markdown(
             f"""
-            <div class="result">
-
-                <div class="result-label">
-                    SCREENING RESULT
-                </div>
-
-                <div class="result-value">
-                    {class_name(selected)}
-                </div>
-
-                <p class="result-text">
-                    {class_description(selected)}
-                </p>
-
-                <p>
-                    <b>Easting:</b>
-                    {easting_selected:,.2f}
-                    &nbsp;&nbsp;&nbsp;
-                    <b>Northing:</b>
-                    {northing_selected:,.2f}
-                </p>
-
-            </div>
-            """,
+<div class="result">
+    <div class="result-label">
+        SCREENING RESULT
+    </div>
+    <div class="result-value">
+        {class_name(selected)}
+    </div>
+    <p class="result-text">
+        {class_description(selected)}
+    </p>
+    <p>
+        <b>Easting:</b>
+        {easting_selected:,.2f}
+        &nbsp;&nbsp;&nbsp;
+        <b>Northing:</b>
+        {northing_selected:,.2f}
+    </p>
+</div>
+""",
             unsafe_allow_html=True,
         )
 
@@ -636,12 +658,12 @@ elif page == "Exploration Map":
 
     st.markdown(
         """
-        <div class="notice">
-            The screening result is a decision-support result
-            based on the prototype geospatial model. It does not
-            confirm the presence of hydrocarbons.
-        </div>
-        """,
+<div class="notice">
+    The screening result is a decision-support result
+    based on the prototype geospatial model. It does not
+    confirm the presence of hydrocarbons.
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -694,32 +716,26 @@ elif page == "Field Inspection":
     ]
 
     st.markdown(
-        """
-        <div class="card">
-
-            <div class="result-label">
-                SELECTED LOCATION
-            </div>
-
-            <div class="result-value">
-                {class_name(selected)}
-            </div>
-
-            <p class="result-text">
-                {class_description(selected)}
-            </p>
-
-            <p>
-                <b>Easting:</b>
-                {selected_easting:,.2f}
-                &nbsp;&nbsp;&nbsp;
-
-                <b>Northing:</b>
-                {selected_northing:,.2f}
-            </p>
-
-        </div>
-        """,
+        f"""
+<div class="card">
+    <div class="result-label">
+        SELECTED LOCATION
+    </div>
+    <div class="result-value">
+        {class_name(selected)}
+    </div>
+    <p class="result-text">
+        {class_description(selected)}
+    </p>
+    <p>
+        <b>Easting:</b>
+        {selected_easting:,.2f}
+        &nbsp;&nbsp;&nbsp;
+        <b>Northing:</b>
+        {selected_northing:,.2f}
+    </p>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -761,10 +777,10 @@ elif page == "Field Inspection":
 
         st.markdown(
             """
-            <div class="card-title">
-                Field Photograph
-            </div>
-            """,
+<div class="card-title">
+    Field Photograph
+</div>
+""",
             unsafe_allow_html=True,
         )
 
@@ -786,24 +802,20 @@ elif page == "Field Inspection":
             )
 
             st.markdown(
-                """
-                <div class="result">
-
-                    <div class="result-label">
-                        AI FIELD OBSERVATION
-                    </div>
-
-                    <div class="result-value">
-                        {readable_field_class(predicted_class)}
-                    </div>
-
-                    <p class="result-text">
-                        Model confidence:
-                        <b>{confidence:.1f}%</b>
-                    </p>
-
-                </div>
-                """,
+                f"""
+<div class="result">
+    <div class="result-label">
+        AI FIELD OBSERVATION
+    </div>
+    <div class="result-value">
+        {readable_field_class(predicted_class)}
+    </div>
+    <p class="result-text">
+        Model confidence:
+        <b>{confidence:.1f}%</b>
+    </p>
+</div>
+""",
                 unsafe_allow_html=True,
             )
 
@@ -821,6 +833,79 @@ elif page == "Field Inspection":
             st.stop()
 
     # --------------------------------------------------------
+    # CONFIRM FIELD CONDITION
+    # --------------------------------------------------------
+    #
+    # The field-image model is a small-dataset prototype
+    # (89 training images across 5 classes). Rather than let
+    # a possibly wrong AI guess silently drive the decision
+    # logic below, the user confirms or corrects it here.
+    # Everything downstream uses this confirmed value, not
+    # the raw model prediction.
+
+    st.write("")
+
+    st.markdown(
+        """
+<div class="card-title">
+    Confirm Field Condition
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    if confidence < 60:
+
+        st.caption(
+            "⚠️ The AI confidence for this photograph is low. "
+            "Please check the photograph and confirm or correct "
+            "the field condition below."
+        )
+
+    else:
+
+        st.caption(
+            "Confirm the AI observation, or correct it if it "
+            "does not match the photograph."
+        )
+
+    readable_classes = [
+        readable_field_class(field_class)
+        for field_class in FIELD_CLASSES
+    ]
+
+    default_index = FIELD_CLASSES.index(
+        predicted_class
+    )
+
+    confirmed_readable = st.radio(
+        "Field condition",
+        readable_classes,
+        index=default_index,
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    confirmed_class = FIELD_CLASSES[
+        readable_classes.index(confirmed_readable)
+    ]
+
+    if confirmed_class == predicted_class:
+
+        st.success(
+            "Using the AI-predicted field condition."
+        )
+
+    else:
+
+        st.info(
+            f"Using your confirmed field condition: "
+            f"{confirmed_readable}. "
+            f"(The AI suggested "
+            f"{readable_field_class(predicted_class)}.)"
+        )
+
+    # --------------------------------------------------------
     # DECISION SUPPORT
     # --------------------------------------------------------
 
@@ -828,25 +913,25 @@ elif page == "Field Inspection":
 
     st.markdown(
         """
-        <div class="card">
-            <div class="card-title">
-                🧠 Field Decision Support
-            </div>
-
-            <div class="card-text">
-                The two AI components answer different questions.
-                The map estimates where earlier review may be useful,
-                while the field model describes visible conditions
-                in the photograph.
-            </div>
-        </div>
-        """,
+<div class="card">
+    <div class="card-title">
+        🧠 Field Decision Support
+    </div>
+    <div class="card-text">
+        The two AI components answer different questions.
+        The map estimates where earlier review may be useful,
+        while the field observation describes visible conditions
+        in the photograph. The suggestion below uses the
+        confirmed field condition, not the raw AI prediction.
+    </div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
     if selected == 3:
 
-        if predicted_class == "Road_Access":
+        if confirmed_class == "Road_Access":
 
             decision = (
                 "The location is marked for earlier investigation "
@@ -854,7 +939,7 @@ elif page == "Field Inspection":
                 "Continue field investigation and document the site."
             )
 
-        elif predicted_class == "Rocky_Surface":
+        elif confirmed_class == "Rocky_Surface":
 
             decision = (
                 "The location is marked for earlier investigation "
@@ -862,7 +947,7 @@ elif page == "Field Inspection":
                 "Collect additional ground evidence from the site."
             )
 
-        elif predicted_class == "Disturbed_Ground":
+        elif confirmed_class == "Disturbed_Ground":
 
             decision = (
                 "The location is marked for earlier investigation "
@@ -902,31 +987,29 @@ elif page == "Field Inspection":
         )
 
     st.markdown(
-        """
-        <div class="result">
-
-            <div class="result-label">
-                SUGGESTED NEXT STEP
-            </div>
-
-            <p class="result-text">
-                {decision}
-            </p>
-
-        </div>
-        """,
+        f"""
+<div class="result">
+    <div class="result-label">
+        SUGGESTED NEXT STEP
+    </div>
+    <p class="result-text">
+        {decision}
+    </p>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
     st.markdown(
         """
-        <div class="notice">
-            <b>Important:</b>
-            The field photograph does not change the GIS screening
-            result. The image model provides complementary information
-            about visible site conditions. Neither model confirms
-            that hydrocarbons are present.
-        </div>
-        """,
+<div class="notice">
+    <b>Important:</b>
+    The field photograph does not change the GIS screening
+    result. The field-image model is a small-dataset prototype,
+    so its prediction is shown alongside a confirmation step
+    rather than used automatically. Neither model confirms
+    that hydrocarbons are present.
+</div>
+""",
         unsafe_allow_html=True,
     )
