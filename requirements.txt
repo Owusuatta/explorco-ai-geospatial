@@ -1,0 +1,7 @@
+streamlit
+numpy
+rasterio
+tensorflow
+pillow
+pyproj
+joblib
